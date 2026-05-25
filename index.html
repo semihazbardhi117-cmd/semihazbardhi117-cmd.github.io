@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Push-Up Board Workout</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#030712;font-family:'Segoe UI',system-ui,sans-serif;color:#f9fafb;max-width:480px;margin:0 auto;min-height:100vh;}
+  button{cursor:pointer;font-family:inherit;}
+
+  /* Header */
+  #header{padding:20px 16px 0;background:linear-gradient(180deg,#0f172a 0%,#030712 100%);}
+  #header .subtitle{font-size:10px;color:#4b5563;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;}
+  #header h1{font-size:24px;font-weight:900;letter-spacing:-1px;}
+  #header .plan-label{font-size:13px;color:#6b7280;margin-bottom:14px;}
+
+  /* Day Selector */
+  #day-selector{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;}
+  #day-selector::-webkit-scrollbar{display:none;}
+  .day-btn{flex-shrink:0;padding:8px 10px;border-radius:10px;border:1px solid #1f2937;background:#111827;color:#6b7280;font-weight:800;font-size:11px;text-align:center;min-width:44px;transition:all .2s;}
+  .day-btn .day-icon{font-size:14px;}
+  .day-btn .day-name{margin-top:2px;}
+  .day-btn.active{border-color:var(--c);background:var(--cbg);color:var(--c);}
+
+  /* Day Banner */
+  #day-banner{display:flex;align-items:center;gap:10px;margin-top:12px;padding-bottom:12px;border-bottom:1px solid #111827;}
+  #banner-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  #banner-title{font-weight:800;font-size:16px;}
+  #banner-desc{font-size:12px;color:#6b7280;margin-top:1px;}
+
+  /* Tab Bar */
+  #tab-bar{display:flex;gap:3px;padding:10px 12px;background:#030712;position:sticky;top:0;z-index:10;border-bottom:1px solid #111827;}
+  .tab-btn{flex:1;padding:8px 2px;border-radius:9px;border:none;background:transparent;color:#4b5563;font-weight:700;font-size:11px;line-height:1.4;transition:all .2s;}
+  .tab-btn.active{background:#1f2937;color:#f9fafb;}
+  .tab-btn .tab-icon{display:block;}
+  .tab-btn .tab-label{display:block;margin-top:1px;}
+
+  /* Tab Panels */
+  .tab-panel{display:none;padding:16px 16px 40px;}
+  .tab-panel.active{display:block;}
+
+  /* Schedule */
+  .schedule-hint{color:#6b7280;font-size:13px;margin-bottom:16px;line-height:1.5;}
+  .day-card{background:#111827;border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid #1f2937;cursor:pointer;transition:opacity .15s;}
+  .day-card:active{opacity:.8;}
+  .day-card-top{display:flex;align-items:center;gap:12px;padding:14px 16px;}
+  .day-card-icon-box{width:44px;height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+  .day-card-name{font-weight:700;font-size:15px;}
+  .day-card-label{font-size:12px;font-weight:600;margin-top:2px;}
+  .day-card-right{margin-left:auto;text-align:right;}
+  .day-card-right span{display:block;color:#9ca3af;font-size:11px;}
+  .day-card-muscles{display:flex;border-top:1px solid #1f2937;}
+  .muscle-cell{flex:1;padding:8px 4px;text-align:center;border-right:1px solid #1f2937;}
+  .muscle-cell:last-child{border-right:none;}
+  .muscle-dot{width:8px;height:8px;border-radius:50%;margin:0 auto 4px;}
+  .muscle-name{color:#9ca3af;font-size:10px;font-weight:600;}
+  .muscle-sets{color:#6b7280;font-size:9px;margin-top:1px;}
+
+  /* Progress Rules */
+  .rules-box{background:#0f172a;border-radius:14px;padding:16px;border:1px solid #1f2937;margin-top:8px;}
+  .rules-box h3{color:#f9fafb;font-size:15px;margin-bottom:12px;}
+  .rule-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+  .rule-row span:first-child{font-size:16px;flex-shrink:0;}
+  .rule-row span:last-child{color:#9ca3af;font-size:13px;line-height:1.5;}
+
+  /* Workout */
+  .day-note{background:#1f2937;border-radius:8px;padding:10px 14px;margin-bottom:16px;color:#d1d5db;font-size:13px;line-height:1.5;}
+  .progress-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+  .progress-label{color:#6b7280;font-size:12px;}
+  .progress-count{font-size:12px;font-weight:700;}
+  .progress-bar-bg{height:6px;background:#1f2937;border-radius:99px;overflow:hidden;margin-bottom:16px;}
+  .progress-bar-fill{height:100%;border-radius:99px;transition:width .4s;}
+
+  .ex-card{background:#111827;border-radius:14px;overflow:hidden;border:1px solid #1f2937;margin-bottom:14px;transition:border-color .2s;}
+  .ex-header{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;}
+  .ex-icon-box{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ex-dot{width:10px;height:10px;border-radius:50%;}
+  .ex-name{font-weight:800;font-size:15px;}
+  .ex-sub{font-size:12px;color:#6b7280;margin-top:1px;}
+  .ex-right{margin-left:auto;text-align:right;}
+  .ex-count{font-size:13px;font-weight:700;}
+  .ex-rest-label{font-size:11px;color:#374151;margin-top:1px;}
+  .ex-tip{padding:0 14px 10px;}
+  .ex-tip-inner{background:#0f172a;border-radius:8px;padding:8px 12px;color:#9ca3af;font-size:12px;line-height:1.5;}
+  .sets-row{border-top:1px solid #1f2937;padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap;}
+  .set-btn{width:52px;height:52px;border-radius:12px;border:2px solid #374151;background:transparent;color:#6b7280;font-weight:800;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .2s;}
+  .set-btn .set-reps{font-size:9px;color:#4b5563;}
+  .set-btn.done .set-reps{display:none;}
+  .rest-timer-box{border-top:1px solid #1f2937;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0 10px;}
+  .rest-label{color:#9ca3af;font-size:11px;letter-spacing:3px;text-transform:uppercase;}
+  .skip-btn{background:none;border:1px solid #374151;color:#9ca3af;border-radius:8px;padding:5px 16px;font-size:12px;}
+
+  /* Complete Banner */
+  .complete-banner{border-radius:14px;padding:20px;text-align:center;margin-top:8px;}
+  .complete-banner .complete-emoji{font-size:36px;}
+  .complete-banner .complete-title{font-weight:800;font-size:18px;margin-top:8px;}
+  .complete-banner .complete-sub{color:#9ca3af;font-size:13px;margin-top:4px;}
+
+  /* Rest Day */
+  .rest-center{text-align:center;padding:32px 20px 24px;}
+  .rest-center .rest-emoji{font-size:64px;}
+  .rest-center h2{font-size:22px;font-weight:800;margin-top:12px;}
+  .rest-center p{color:#6b7280;margin-top:6px;font-size:13px;}
+  .rest-tips-box{background:#111827;border-radius:14px;padding:16px;border:1px solid #1f2937;}
+  .rest-tips-box h3{color:#9ca3af;font-weight:700;font-size:13px;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;}
+  .rest-tip-row{display:flex;gap:10px;margin-bottom:10px;align-items:center;}
+  .rest-tip-dot{width:6px;height:6px;border-radius:50%;background:#374151;flex-shrink:0;}
+  .rest-tip-text{color:#9ca3af;font-size:14px;}
+
+  /* Warmup */
+  .phase-row{display:flex;gap:8px;margin-bottom:16px;}
+  .phase-btn{flex:1;padding:11px;border-radius:12px;border:none;font-weight:800;font-size:14px;transition:all .2s;}
+  .warmup-stats{display:flex;justify-content:space-between;margin-bottom:12px;}
+  .warmup-stats span{color:#6b7280;font-size:12px;}
+  .warmup-item{background:#111827;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #1f2937;transition:all .2s;}
+  .warmup-item.done-item{opacity:.65;}
+  .warmup-row{display:flex;align-items:center;gap:12px;}
+  .warmup-info{flex:1;}
+  .warmup-name{font-weight:700;font-size:14px;}
+  .warmup-desc{color:#6b7280;font-size:12px;margin-top:3px;line-height:1.4;}
+  .warmup-start-btn{border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;border:none;white-space:nowrap;}
+
+  /* Nutrition */
+  .nutrition-hint{color:#6b7280;font-size:13px;margin-bottom:16px;line-height:1.5;}
+  .nutr-card{background:#111827;border-radius:14px;margin-bottom:10px;overflow:hidden;border:1px solid #1f2937;cursor:pointer;transition:all .2s;}
+  .nutr-top{display:flex;align-items:center;gap:12px;padding:14px 16px;}
+  .nutr-icon-box{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .nutr-title{font-weight:700;font-size:15px;}
+  .nutr-arrow{color:#374151;font-size:18px;margin-left:auto;}
+  .nutr-body{padding:0 16px 16px;display:none;}
+  .nutr-body.open{display:block;}
+  .nutr-tip{background:#0f172a;border-radius:10px;padding:12px 14px;color:#9ca3af;font-size:13px;line-height:1.7;}
+
+  /* SVG Timer */
+  svg.timer-svg{display:block;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="subtitle">Beginner · Build Muscle</div>
+  <h1>Push-Up Board</h1>
+  <div class="plan-label">5-Day Workout Plan</div>
+  <div id="day-selector"></div>
+  <div id="day-banner">
+    <div id="banner-icon"></div>
+    <div>
+      <div id="banner-title"></div>
+      <div id="banner-desc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <button class="tab-btn active" data-tab="schedule"><span class="tab-icon">📅</span><span class="tab-label">Schedule</span></button>
+  <button class="tab-btn" data-tab="workout"><span class="tab-icon">💪</span><span class="tab-label">Workout</span></button>
+  <button class="tab-btn" data-tab="warmup"><span class="tab-icon">🔥</span><span class="tab-label">Warm-Up</span></button>
+  <button class="tab-btn" data-tab="nutrition"><span class="tab-icon">🥗</span><span class="tab-label">Nutrition</span></button>
+</div>
+
+<!-- SCHEDULE TAB -->
+<div class="tab-panel active" id="tab-schedule"></div>
+
+<!-- WORKOUT TAB -->
+<div class="tab-panel" id="tab-workout"></div>
+
+<!-- WARMUP TAB -->
+<div class="tab-panel" id="tab-warmup"></div>
+
+<!-- NUTRITION TAB -->
+<div class="tab-panel" id="tab-nutrition"></div>
+
+<script>
+const DAYS = [
+  { day:"MON", fullDay:"Monday", label:"Full Workout", icon:"💪", color:"#f97316",
+    description:"Hit all 4 muscle groups at full intensity.",
+    exercises:[
+      {muscle:"Chest",boardColor:"Red",color:"#ef4444",sets:4,reps:"15–25",rest:60,tip:"Wide hand position, elbows flare out at ~45°"},
+      {muscle:"Shoulders",boardColor:"Blue",color:"#3b82f6",sets:4,reps:"10–20",rest:60,tip:"Hands slightly wider than shoulder-width"},
+      {muscle:"Triceps",boardColor:"Yellow",color:"#eab308",sets:4,reps:"10–20",rest:60,tip:"Keep elbows close to your body throughout"},
+      {muscle:"Back",boardColor:"Green",color:"#22c55e",sets:4,reps:"15–25",rest:60,tip:"Focus on squeezing shoulder blades together"},
+    ]},
+  { day:"TUE", fullDay:"Tuesday", label:"Light Day", icon:"🌤️", color:"#a855f7",
+    description:"Active recovery — don't push to failure.",
+    note:"Don't go to failure, keep it easier",
+    exercises:[
+      {muscle:"Chest",boardColor:"Red",color:"#ef4444",sets:3,reps:"12–18",rest:45,tip:"Smooth reps, stop 2–3 reps short of failure"},
+      {muscle:"Shoulders",boardColor:"Blue",color:"#3b82f6",sets:3,reps:"8–12",rest:45,tip:"Focus on form over reps today"},
+      {muscle:"Triceps",boardColor:"Yellow",color:"#eab308",sets:3,reps:"8–12",rest:45,tip:"Light and controlled, no rushing"},
+      {muscle:"Back",boardColor:"Green",color:"#22c55e",sets:3,reps:"12–18",rest:45,tip:"Keep core tight the whole time"},
+    ]},
+  { day:"WED", fullDay:"Wednesday", label:"Rest Day", icon:"😴", color:"#6b7280", rest:true,
+    restTips:["Sleep 7–9 hours for muscle repair","Drink 2–3L of water","Light walk or stretching is fine","Eat enough protein today too"]},
+  { day:"THU", fullDay:"Thursday", label:"Hard Day", icon:"⚡", color:"#ef4444",
+    description:"Push yourself — slow tempo or add a weighted backpack.",
+    note:"Slow tempo (3 sec down) or add backpack 🎒",
+    exercises:[
+      {muscle:"Chest",boardColor:"Red",color:"#ef4444",sets:4,reps:"20+ slow",rest:75,tip:"3 sec down, 1 sec pause at bottom, explode up"},
+      {muscle:"Shoulders",boardColor:"Blue",color:"#3b82f6",sets:4,reps:"12–18",rest:75,tip:"Add weight if this feels too easy"},
+      {muscle:"Triceps",boardColor:"Yellow",color:"#eab308",sets:4,reps:"12–18",rest:75,tip:"3 sec negative on every rep"},
+      {muscle:"Back",boardColor:"Green",color:"#22c55e",sets:4,reps:"20+",rest:75,tip:"Go to near failure on last set"},
+    ]},
+  { day:"FRI", fullDay:"Friday", label:"Rest Day", icon:"😴", color:"#6b7280", rest:true,
+    restTips:["Prepare for Saturday's session","Foam roll or stretch sore muscles","Prioritize sleep tonight","Meal prep if needed"]},
+  { day:"SAT", fullDay:"Saturday", label:"Medium Day", icon:"🔥", color:"#f59e0b",
+    description:"Moderate intensity — solid effort without burning out.",
+    exercises:[
+      {muscle:"Chest",boardColor:"Red",color:"#ef4444",sets:4,reps:"15–20",rest:60,tip:"Good pace, solid form throughout all 4 sets"},
+      {muscle:"Shoulders",boardColor:"Blue",color:"#3b82f6",sets:4,reps:"10–15",rest:60,tip:"Control the descent on every rep"},
+      {muscle:"Triceps",boardColor:"Yellow",color:"#eab308",sets:4,reps:"10–15",rest:60,tip:"Lock out elbows fully at the top"},
+      {muscle:"Back",boardColor:"Green",color:"#22c55e",sets:4,reps:"15–20",rest:60,tip:"Retract shoulder blades on each rep"},
+    ]},
+  { day:"SUN", fullDay:"Sunday", label:"Rest Day", icon:"🌿", color:"#6b7280", rest:true,
+    restTips:["Full rest — you've earned it!","Reflect on the week's progress","Plan next week's sessions","Light yoga or walking is fine"]},
+];
+
+const WARMUP = [
+  {name:"Arm Circles",duration:30,desc:"10 forward, 10 backward — loosen shoulders"},
+  {name:"Shoulder Rolls",duration:20,desc:"Big slow rolls, front and back"},
+  {name:"Wrist Flexions",duration:20,desc:"Flex and extend both wrists fully"},
+  {name:"Hip Rotations",duration:20,desc:"Hands on hips, big circles each direction"},
+  {name:"Bodyweight Squats",duration:30,desc:"10 slow controlled reps"},
+  {name:"Knee Push-Ups",duration:30,desc:"5–8 easy reps to activate chest"},
+];
+const COOLDOWN = [
+  {name:"Chest Stretch",duration:40,desc:"Clasp hands behind back, open chest wide"},
+  {name:"Tricep Stretch",duration:30,desc:"Elbow behind head, hold 15s each side"},
+  {name:"Shoulder Cross-Body",duration:30,desc:"Pull arm across chest, 15s each side"},
+  {name:"Child's Pose",duration:40,desc:"Arms forward, breathe deeply into the stretch"},
+  {name:"Cat-Cow Stretch",duration:30,desc:"10 slow reps on hands and knees"},
+  {name:"Deep Breathing",duration:40,desc:"4 counts in, 6 counts out — repeat 5×"},
+];
+const NUTRITION = [
+  {icon:"🥩",title:"Daily Protein Goal",color:"#ef4444",tip:"Aim for 0.7–1g of protein per lb of bodyweight. Best sources: eggs, chicken breast, tuna, Greek yogurt, cottage cheese, protein shakes."},
+  {icon:"⏰",title:"Pre-Workout Meal",color:"#f97316",tip:"Eat 1–2 hrs before training. Try: oats + banana, rice + chicken, or peanut butter toast. Avoid heavy or greasy food."},
+  {icon:"🥤",title:"Post-Workout",color:"#3b82f6",tip:"Within 30–60 min after, eat protein + carbs. Good options: protein shake + fruit, eggs on toast, or chicken + rice."},
+  {icon:"💧",title:"Hydration",color:"#22c55e",tip:"Drink 2–3L of water daily. Sip consistently during your workout. Dehydration kills performance and recovery."},
+  {icon:"🌙",title:"Before Bed",color:"#8b5cf6",tip:"Eat slow-digesting protein before sleep for overnight muscle repair. Try: cottage cheese, Greek yogurt, or a casein protein shake."},
+  {icon:"🚫",title:"What to Avoid",color:"#6b7280",tip:"Heavy meals right before training, alcohol (slows recovery by ~25%), and ultra-processed snacks that spike blood sugar."},
+];
+const PROGRESS_RULES = [
+  {icon:"📈",rule:"Add +2 reps per set each week once all sets feel comfortable"},
+  {icon:"⏱️",rule:"Shorten rest by 5 sec each week to increase intensity"},
+  {icon:"🎒",rule:"Add a weighted backpack when bodyweight becomes too easy"},
+  {icon:"🐢",rule:"Use slow tempo (3 sec down) to make reps harder without adding weight"},
+  {icon:"💤",rule:"If you're very sore, take an extra rest day — it's not weakness"},
+  {icon:"📋",rule:"After 4 weeks, bump sets from 3→4 or 4→5 per exercise"},
+];
+
+// STATE
+let currentDay = 0;
+let currentTab = 'schedule';
+let setLog = {}; // key: "dayIdx-exIdx-setIdx" -> bool
+let expandedEx = null;
+let restTimer = null;
+let warmupPhase = 'warmup';
+let warmupDone = {};
+let warmupActive = null;
+let warmupInterval = null;
+let warmupSec = 0;
+
+// Helpers
+function hex(c,a){return c+Math.round(a*255).toString(16).padStart(2,'0');}
+function makeTimerSVG(sec, total, color, size=72){
+  const r=size/2-7, circ=2*Math.PI*r, progress=total>0?sec/total:0, dash=circ*progress;
+  return `<svg class="timer-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1f2937" stroke-width="5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round"
+      transform="rotate(-90 ${size/2} ${size/2})" style="transition:stroke-dasharray .4s"/>
+    <text x="${size/2}" y="${size/2+6}" text-anchor="middle" fill="white" font-size="${size/4}" font-weight="bold" font-family="monospace">${sec}</text>
+  </svg>`;
+}
+
+// ─── RENDER DAY SELECTOR ───
+function renderDaySelector(){
+  const sel = document.getElementById('day-selector');
+  sel.innerHTML = DAYS.map((d,i)=>`
+    <button class="day-btn${i===currentDay?' active':''}" style="--c:${d.color};--cbg:${d.color}22" onclick="selectDay(${i})">
+      <div class="day-icon">${d.icon}</div>
+      <div class="day-name">${d.day}</div>
+    </button>`).join('');
+}
+
+function renderDayBanner(){
+  const d=DAYS[currentDay];
+  const bi=document.getElementById('banner-icon');
+  bi.style.background=d.color+'22';
+  bi.style.border=`1px solid ${d.color}44`;
+  bi.textContent=d.icon;
+  document.getElementById('banner-title').textContent=`${d.fullDay} — ${d.label}`;
+  document.getElementById('banner-desc').textContent=d.description||'';
+}
+
+function selectDay(i){
+  currentDay=i;
+  setLog={};
+  expandedEx=null;
+  clearRestTimer();
+  renderDaySelector();
+  renderDayBanner();
+  switchTab('workout');
+}
+
+// ─── TABS ───
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+tab));
+  if(tab==='schedule') renderSchedule();
+  if(tab==='workout') renderWorkout();
+  if(tab==='warmup') renderWarmup();
+  if(tab==='nutrition') renderNutrition();
+}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+// ─── SCHEDULE ───
+function renderSchedule(){
+  const el=document.getElementById('tab-schedule');
+  el.innerHTML=`<p class="schedule-hint">Tap any day to jump to that workout.</p>`+
+  DAYS.map((d,i)=>`
+    <div class="day-card" onclick="selectDay(${i})">
+      <div class="day-card-top">
+        <div class="day-card-icon-box" style="background:${d.rest?'#1f2937':d.color+'22'};border:1px solid ${d.rest?'#374151':d.color+'44'}">
+          <span style="font-size:18px">${d.icon}</span>
+          <span style="font-size:9px;font-weight:800;color:${d.rest?'#6b7280':d.color}">${d.day}</span>
+        </div>
+        <div>
+          <div class="day-card-name">${d.fullDay}</div>
+          <div class="day-card-label" style="color:${d.rest?'#6b7280':d.color}">${d.label}</div>
+        </div>
+        ${!d.rest?`<div class="day-card-right"><span>${d.exercises.length} muscles</span><span>${d.exercises[0].sets} sets each</span></div>`:'<span style="color:#374151;font-size:18px;margin-left:auto">😴</span>'}
+      </div>
+      ${!d.rest?`<div class="day-card-muscles">${d.exercises.map((ex,ei)=>`
+        <div class="muscle-cell" style="${ei<3?'border-right:1px solid #1f2937':''}">
+          <div class="muscle-dot" style="background:${ex.color}"></div>
+          <div class="muscle-name">${ex.muscle}</div>
+          <div class="muscle-sets">${ex.sets}×${ex.reps}</div>
+        </div>`).join('')}</div>`:''}
+    </div>`).join('')+
+  `<div class="rules-box">
+    <h3>📈 Progress Rules</h3>
+    ${PROGRESS_RULES.map(r=>`<div class="rule-row"><span>${r.icon}</span><span>${r.rule}</span></div>`).join('')}
+  </div>`;
+}
+
+// ─── WORKOUT ───
+function renderWorkout(){
+  const d=DAYS[currentDay];
+  const el=document.getElementById('tab-workout');
+  if(d.rest){
+    el.innerHTML=`
+      <div class="rest-center">
+        <div class="rest-emoji">${d.icon}</div>
+        <h2>Rest Day</h2>
+        <p>Recovery is where muscle is actually built.</p>
+      </div>
+      <div class="rest-tips-box">
+        <h3>Today's Checklist</h3>
+        ${(d.restTips||[]).map(t=>`<div class="rest-tip-row"><div class="rest-tip-dot"></div><span class="rest-tip-text">${t}</span></div>`).join('')}
+      </div>`;
+    return;
+  }
+  const totalSets=d.exercises.reduce((a,e)=>a+e.sets,0);
+  const doneSets=Object.keys(setLog).filter(k=>k.startsWith(currentDay+'-')&&setLog[k]).length;
+  const pct=Math.round(doneSets/totalSets*100);
+  const complete=pct===100&&doneSets>0;
+
+  el.innerHTML=(d.note?`<div class="day-note" style="border-left:3px solid ${d.color}">👉 ${d.note}</div>`:'')+
+  `<div class="progress-row"><span class="progress-label">Progress</span><span class="progress-count" style="color:${complete?d.color:'#9ca3af'}">${complete?'✓ Complete!':doneSets+'/'+totalSets+' sets'}</span></div>
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:${pct}%;background:${d.color}"></div></div>`+
+  d.exercises.map((ex,ei)=>{
+    const exDone=Array.from({length:ex.sets},(_,si)=>setLog[`${currentDay}-${ei}-${si}`]).filter(Boolean).length;
+    const isOpen=expandedEx===ei;
+    return `<div class="ex-card" id="ex-${ei}" style="border-color:${exDone===ex.sets?ex.color+'66':'#1f2937'}">
+      <div class="ex-header" onclick="toggleEx(${ei})">
+        <div class="ex-icon-box" style="background:${ex.color}22;border:1px solid ${ex.color}44">
+          <div class="ex-dot" style="background:${ex.color}"></div>
+        </div>
+        <div>
+          <div class="ex-name">${ex.muscle}</div>
+          <div class="ex-sub"><span style="color:${ex.color};font-weight:600">${ex.boardColor} position</span> · ${ex.sets} sets × ${ex.reps} reps</div>
+        </div>
+        <div class="ex-right">
+          <div class="ex-count" style="color:${exDone===ex.sets?ex.color:'#6b7280'}">${exDone}/${ex.sets}</div>
+          <div class="ex-rest-label">rest ${ex.rest}s</div>
+        </div>
+      </div>
+      ${isOpen?`<div class="ex-tip"><div class="ex-tip-inner" style="border-left:2px solid ${ex.color}">💡 ${ex.tip}</div></div>`:''}
+      <div class="sets-row">${Array.from({length:ex.sets},(_,si)=>{
+        const key=`${currentDay}-${ei}-${si}`;
+        const done=setLog[key];
+        return `<button class="set-btn${done?' done':''}" id="sb-${ei}-${si}"
+          style="border-color:${done?ex.color:'#374151'};background:${done?ex.color+'22':'transparent'};color:${done?ex.color:'#6b7280'}"
+          onclick="toggleSet(${ei},${si},${ex.rest},'${ex.color}','${ex.reps}')">
+          <span>${done?'✓':'S'+(si+1)}</span>
+          ${!done?`<span class="set-reps">${ex.reps}</span>`:''}
+        </button>`;}).join('')}
+      </div>
+      <div id="rest-${ei}" style="display:none;border-top:1px solid #1f2937"></div>
+    </div>`;}).join('')+
+  (complete?`<div class="complete-banner" style="background:${d.color}22;border:1px solid ${d.color}44">
+    <div class="complete-emoji">🎉</div>
+    <div class="complete-title" style="color:${d.color}">Workout Complete!</div>
+    <div class="complete-sub">Great work. Remember to cool down!</div>
+  </div>`:'');
+}
+
+function toggleEx(ei){
+  expandedEx = expandedEx===ei ? null : ei;
+  renderWorkout();
+}
+
+let activeRestEi = null;
+let restInterval = null;
+let restSec = 0;
+let restColor = '#f97316';
+let restDuration = 60;
+
+function clearRestTimer(){
+  if(restInterval) clearInterval(restInterval);
+  restInterval=null; activeRestEi=null;
+}
+
+function toggleSet(ei,si,restDur,color,reps){
+  const key=`${currentDay}-${ei}-${si}`;
+  setLog[key]=!setLog[key];
+  if(setLog[key]){
+    clearRestTimer();
+    activeRestEi=ei; restDuration=restDur; restColor=color; restSec=restDur;
+    startRestTimer(ei,restDur,color);
+  } else {
+    if(activeRestEi===ei){ clearRestTimer(); const rb=document.getElementById('rest-'+ei); if(rb) rb.style.display='none';}
+  }
+  // update just the set button and progress without full re-render
+  const btn=document.getElementById(`sb-${ei}-${si}`);
+  if(btn){
+    const done=setLog[key];
+    btn.className='set-btn'+(done?' done':'');
+    btn.style.borderColor=done?color:'#374151';
+    btn.style.background=done?color+'22':'transparent';
+    btn.style.color=done?color:'#6b7280';
+    btn.innerHTML=done?'<span>✓</span>':`<span>S${si+1}</span><span class="set-reps">${reps}</span>`;
+  }
+  updateProgress();
+}
+
+function startRestTimer(ei, dur, color){
+  const rb=document.getElementById('rest-'+ei);
+  if(!rb) return;
+  rb.style.display='block';
+  restSec=dur;
+  function renderRT(){
+    rb.innerHTML=`<div class="rest-timer-box">
+      <div class="rest-label">Rest</div>
+      ${makeTimerSVG(restSec,dur,color,72)}
+      <button class="skip-btn" onclick="skipRest(${ei})">Skip</button>
+    </div>`;
+  }
+  renderRT();
+  restInterval=setInterval(()=>{
+    restSec--;
+    if(restSec<=0){ clearRestTimer(); if(rb){ rb.style.display='none'; rb.innerHTML='';} return;}
+    renderRT();
+  },1000);
+}
+
+function skipRest(ei){
+  clearRestTimer();
+  const rb=document.getElementById('rest-'+ei);
+  if(rb){ rb.style.display='none'; rb.innerHTML='';}
+}
+
+function updateProgress(){
+  const d=DAYS[currentDay]; if(d.rest) return;
+  const totalSets=d.exercises.reduce((a,e)=>a+e.sets,0);
+  const doneSets=Object.keys(setLog).filter(k=>k.startsWith(currentDay+'-')&&setLog[k]).length;
+  const pct=Math.round(doneSets/totalSets*100);
+  const fill=document.getElementById('prog-fill');
+  if(fill) fill.style.width=pct+'%';
+  const cnt=document.querySelector('.progress-count');
+  if(cnt){
+    const complete=pct===100&&doneSets>0;
+    cnt.style.color=complete?d.color:'#9ca3af';
+    cnt.textContent=complete?'✓ Complete!':doneSets+'/'+totalSets+' sets';
+    if(complete&&!document.querySelector('.complete-banner')){
+      const el=document.getElementById('tab-workout');
+      const div=document.createElement('div');
+      div.className='complete-banner';
+      div.style.background=d.color+'22';
+      div.style.border=`1px solid ${d.color}44`;
+      div.innerHTML=`<div class="complete-emoji">🎉</div><div class="complete-title" style="color:${d.color}">Workout Complete!</div><div class="complete-sub">Great work. Remember to cool down!</div>`;
+      el.appendChild(div);
+    }
+  }
+  d.exercises.forEach((ex,ei)=>{
+    const exDone=Array.from({length:ex.sets},(_,si)=>setLog[`${currentDay}-${ei}-${si}`]).filter(Boolean).length;
+    const card=document.getElementById('ex-'+ei);
+    if(card) card.style.borderColor=exDone===ex.sets?ex.color+'66':'#1f2937';
+    const cnt2=card&&card.querySelector('.ex-count');
+    if(cnt2){ cnt2.textContent=`${exDone}/${ex.sets}`; cnt2.style.color=exDone===ex.sets?ex.color:'#6b7280';}
+  });
+}
+
+// ─── WARMUP ───
+function renderWarmup(){
+  const list=warmupPhase==='warmup'?WARMUP:COOLDOWN;
+  const color=warmupPhase==='warmup'?'#f97316':'#8b5cf6';
+  const doneCount=Object.values(warmupDone).filter(Boolean).length;
+  const totalTime=list.reduce((a,x)=>a+x.duration,0);
+  const el=document.getElementById('tab-warmup');
+  el.innerHTML=`
+    <div class="phase-row">
+      <button class="phase-btn" onclick="setPhase('warmup')" style="background:${warmupPhase==='warmup'?'#f97316':'#111827'};color:${warmupPhase==='warmup'?'white':'#6b7280'}">🔥 Warm-Up</button>
+      <button class="phase-btn" onclick="setPhase('cooldown')" style="background:${warmupPhase==='cooldown'?'#8b5cf6':'#111827'};color:${warmupPhase==='cooldown'?'white':'#6b7280'}">❄️ Cool-Down</button>
+    </div>
+    <div class="warmup-stats"><span>${doneCount}/${list.length} done</span><span>~${totalTime}s total</span></div>`+
+  list.map((item,i)=>`
+    <div class="warmup-item${warmupDone[warmupPhase+i]?' done-item':''}" id="wi-${i}" style="border-color:${warmupActive===i?color:warmupDone[warmupPhase+i]?color+'55':'#1f2937'}">
+      <div class="warmup-row">
+        <div class="warmup-info">
+          <div class="warmup-name" style="color:${warmupDone[warmupPhase+i]?'#6b7280':'#f9fafb'}">${warmupDone[warmupPhase+i]?'✓ ':''} ${item.name}</div>
+          <div class="warmup-desc">${item.desc}</div>
+        </div>
+        ${warmupActive===i
+          ? makeTimerSVG(warmupSec,item.duration,color,70)
+          : `<button class="warmup-start-btn" onclick="startWarmup(${i})"
+              style="background:${warmupDone[warmupPhase+i]?'transparent':color};border:${warmupDone[warmupPhase+i]?'1px solid '+color+'55':'none'};color:${warmupDone[warmupPhase+i]?color:'white'}">
+              ${warmupDone[warmupPhase+i]?'Redo':item.duration+'s'}
+            </button>`}
+      </div>
+    </div>`).join('');
+}
+
+function setPhase(phase){
+  warmupPhase=phase; warmupActive=null; warmupDone={};
+  if(warmupInterval) clearInterval(warmupInterval);
+  renderWarmup();
+}
+
+function startWarmup(i){
+  if(warmupInterval) clearInterval(warmupInterval);
+  const list=warmupPhase==='warmup'?WARMUP:COOLDOWN;
+  const color=warmupPhase==='warmup'?'#f97316':'#8b5cf6';
+  warmupActive=i; warmupSec=list[i].duration;
+  renderWarmup();
+  warmupInterval=setInterval(()=>{
+    warmupSec--;
+    if(warmupSec<=0){
+      clearInterval(warmupInterval);
+      warmupDone[warmupPhase+i]=true;
+      warmupActive=null;
+      renderWarmup(); return;
+    }
+    // update just the timer
+    const wi=document.getElementById('wi-'+i);
+    if(wi){
+      const timerEl=wi.querySelector('svg');
+      if(timerEl) timerEl.outerHTML=makeTimerSVG(warmupSec,list[i].duration,color,70);
+    }
+  },1000);
+}
+
+// ─── NUTRITION ───
+let openNutr = null;
+function renderNutrition(){
+  document.getElementById('tab-nutrition').innerHTML=`
+    <p class="nutrition-hint">Tap each card to read the full tip. Nutrition is 50% of your results.</p>`+
+  NUTRITION.map((n,i)=>`
+    <div class="nutr-card" onclick="toggleNutr(${i})" style="border-color:${openNutr===i?n.color+'66':'#1f2937'}">
+      <div class="nutr-top">
+        <div class="nutr-icon-box" style="background:${n.color}22;border:1px solid ${n.color}33">${n.icon}</div>
+        <div class="nutr-title">${n.title}</div>
+        <div class="nutr-arrow">${openNutr===i?'▲':'▼'}</div>
+      </div>
+      <div class="nutr-body${openNutr===i?' open':''}">
+        <div class="nutr-tip" style="border-left:3px solid ${n.color}">${n.tip}</div>
+      </div>
+    </div>`).join('');
+}
+function toggleNutr(i){ openNutr=openNutr===i?null:i; renderNutrition(); }
+
+// ─── INIT ───
+renderDaySelector();
+renderDayBanner();
+renderSchedule();
+</script>
+</body>
+</html>
